@@ -1,0 +1,396 @@
+package main;
+
+import field.Field;
+import field.ButtleField;
+import humans.Hero;
+import building.Castle;
+import humans.Unit;
+
+import java.util.Random;            // интерфейс / бекэнд + арифметика + враг другой цвет!
+import java.util.Scanner;           // массив с текстами можно сделать и выводить
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+
+public class Main {
+    private static final int LEN_FIELD_Y = 11;
+    private static final int LEN_FIELD_X = 11;
+    private static final int LEN_BATTLE_FIELD_Y = 6;
+    private static final int LEN_BATTLE_FIELD_X = 6;
+    private static int treasureDayBattle = 1;
+
+    static Logger log = LogManager.getLogger(Main.class);
+    
+
+    public static Random random = new Random();
+
+    public static int finalfinalBattle(Hero player, Scanner scanner) {
+        int randomValue = random.nextInt(2);              //  случайное число 0 или 1
+        //System.out.println("Случайное значение: " + randomValue);
+        Unit[] enemyUnits;
+        if (randomValue == 0) {                                    //созд одного директора или армию копов
+            System.out.println("\n\nНа тазах вы наткнулись на полицию, которая ловит всех студентов присутствующих там.\n" +
+                    "Но вы же хотите продолжить веселье, юный герой? Возможность веселиться нужно завоевать!\nБой!\n");
+
+            log.info("Вы наткнулись на полицию");
+            enemyUnits = player.makeEnemyUnits(3);       //армию копов
+        } else {
+            System.out.println("\n\nНа тазах вы разговорились с ректором, и он решил вас испытать, после чего предложил вам " +
+                    "шуточную битву.\nКак от такой желанного предложения можно отказаться, " +
+                    "юный герой? Да начнется противостояние!\nБой!\n");
+
+            log.info("Вы наткнулись на ректора");
+            enemyUnits = player.makeEnemyUnits(10);      //директора
+        }
+        ButtleField battleField = new ButtleField(LEN_BATTLE_FIELD_Y, LEN_BATTLE_FIELD_X, player.getUnits(), enemyUnits);
+        int lose = endOfBattle(player.getUnits(), enemyUnits);
+        int round = 1;
+        while (lose == 0) {
+            System.out.println("\nРаунд " + round);
+            System.out.println("\n\nИнформация о друзьях-студентах :");
+            battleField.displayInfoAboutUnits(player.getUnits(), 2);
+            System.out.println("\nИнформация о соперниках:");
+            battleField.displayInfoAboutUnits(enemyUnits, randomValue);
+            battleField.displayButtleField(player.getUnits(), enemyUnits);
+
+            for (int i = 1; i < 6; i++) {
+                if (player.getUnits()[i].getCount() > 0) {
+                    battleField.moveUnit(player.getUnits(), enemyUnits, i, scanner);
+                }
+            }
+            battleField.moveEnemyUnits(player.getUnits(), enemyUnits);
+            battleField.displayButtleField(player.getUnits(), enemyUnits);
+            for (int i = 1; i < 6; i++) {
+                if (player.getUnits()[i].getCount() > 0) {
+                    battleField.attackUnit(player.getUnits(), enemyUnits, i, scanner);
+                }
+            }
+            battleField.computerAttack(player.getUnits(), enemyUnits);
+            round++;
+            lose = endOfBattle(player.getUnits(), enemyUnits);
+        }
+        if (lose == 200) {
+            if (randomValue == 0) {
+                System.out.println("\n\nВы проиграли полиции... Вас забрали на бобике в участок и вы не имеете ни малейшего представления" +
+                        "о том,\nгде может быть ваш диплом...");
+            } else {
+                System.out.println("\n\nВы проиграли ректору в этой серьезной схватке. Ну что же, это значит, что вам еще есть к чему " +
+                        "стремиться,\nмой юный герой! Вы уходите с тазов счастливым, ведь, несмотря на поражение, это был лучший " +
+                        "выпуск из всех, что можно представить!\nВы держите в руках синий диплом.");
+            }
+            return lose;
+        }
+        if (randomValue == 0) {
+            System.out.println("\n\nПоздравляю, вы победили полицию! Вы с друзьями весело и задорно продолжается праздновать получение " +
+                    "диплома и тусить на тазах.");
+            if (player.getUnits()[5].getCount() > 0) {
+                System.out.println("Все это время в руках вы держите заветный красный диплом");
+            } else {
+                System.out.println("Вы держите в руках синий диплом");
+            }
+            return lose;
+        }
+        System.out.println("\n\nВы победили ректора! Он вами гордится и очень доволен.\nОн лично вручает вам ваш красный диплом!");
+        return lose;
+    }
+
+
+    public static int buttle(Hero player, Scanner scanner, int treasure, int was) {
+        Unit[] enemyUnits = player.makeEnemyUnits(treasureDayBattle);
+        ButtleField battleField = new ButtleField(LEN_BATTLE_FIELD_Y, LEN_BATTLE_FIELD_X, player.getUnits(), enemyUnits);
+        int lose = endOfBattle(player.getUnits(), enemyUnits);
+        int round = 1;
+        while (lose == 0) {
+            System.out.println("\nРаунд " + round);
+            System.out.println("\n\nИнформация о друзьях-студентах :");
+            battleField.displayInfoAboutUnits(player.getUnits(), 2);
+            System.out.println("\nИнформация о количестве 'противников':");
+            battleField.displayInfoAboutUnits(enemyUnits, 2);
+            battleField.displayButtleField(player.getUnits(), enemyUnits);
+
+            for (int i = 1; i < 6; i++) {
+                if (player.getUnits()[i].getCount() > 0) {
+                    battleField.moveUnit(player.getUnits(), enemyUnits, i, scanner);
+                }
+            }
+            battleField.moveEnemyUnits(player.getUnits(), enemyUnits);
+            battleField.displayButtleField(player.getUnits(), enemyUnits);
+
+            for (int i = 1; i < 6; i++) {
+                if (player.getUnits()[i].getCount() > 0) {
+                    battleField.attackUnit(player.getUnits(), enemyUnits, i, scanner);
+                }
+            }
+            battleField.computerAttack(player.getUnits(), enemyUnits);
+
+            round++;
+            lose = endOfBattle(player.getUnits(), enemyUnits);
+        }
+        if (lose == 200) {
+            System.out.println("Вы не смогли сдать дз/рк и вас отчислили...");
+            return lose;
+        }
+
+        player.addGold(treasure);
+        System.out.println("Вы сдали рк и вас не отчислили!\n" +
+                "А за это полагается награда: " + treasure + " золота.\n");
+        treasureDayBattle++;
+        return was;
+    }
+
+
+    public static int endOfBattle(Unit[] playerUnits, Unit[] computerUnits) {
+        boolean playerLose = true;
+        boolean computerLose = true;
+        for (int i = 1; i < 6; i++) {
+            if (playerUnits[i].getCount() > 0) {
+                playerLose = false;
+                break;
+            }
+        }
+        for (int i = 1; i < 6; i++) {
+            if (computerUnits[i].getCount() > 0) {
+                computerLose = false;
+                break;
+            }
+        }
+        if (!playerLose && !computerLose) {
+            return 0;
+        }
+        if (playerLose) {
+            log.info("Вы проиграли");
+            return 200;
+
+        }
+        log.info("Вы победили");
+        return 100;
+    }
+
+
+    public static int finalBattle(Hero player, Hero computer, Scanner scanner) {
+        System.out.print("Вот вы и достигли финального этапа! Битва, в которой станет понятно все!" +
+                "Сможете ли вы одолеть напор аттестационной комиссии и стать настоящим героем?");
+
+        ButtleField battleField = new ButtleField(LEN_BATTLE_FIELD_Y, LEN_BATTLE_FIELD_X, player.getUnits(), computer.getUnits());
+        int lose = endOfBattle(player.getUnits(), computer.getUnits());
+        int round = 1;
+        while (lose == 0) {
+            System.out.println("\nРаунд " + round);
+            System.out.println("\n\nИнформация о друзьях-студентах :");
+            battleField.displayInfoAboutUnits(player.getUnits(), 2);
+            System.out.println("\nИнформация о количестве 'противников':");
+            battleField.displayInfoAboutUnits(computer.getUnits(), 2);
+            battleField.displayButtleField(player.getUnits(), computer.getUnits());
+
+            for (int i = 1; i < 6; i++) {
+                if (player.getUnits()[i].getCount() > 0) {
+                    battleField.moveUnit(player.getUnits(), computer.getUnits(), i, scanner);
+                }
+            }
+            battleField.moveEnemyUnits(player.getUnits(), computer.getUnits());
+            battleField.displayButtleField(player.getUnits(), computer.getUnits());
+
+            for (int i = 1; i < 6; i++) {
+                if (player.getUnits()[i].getCount() > 0) {
+                    battleField.attackUnit(player.getUnits(), computer.getUnits(), i, scanner);
+                }
+            }
+            battleField.computerAttack(player.getUnits(), computer.getUnits());
+
+            round++;
+            lose = endOfBattle(player.getUnits(), computer.getUnits());
+        }
+        if (lose == 200) {
+            System.out.println("Вы не смогли защитить диплом и вас отчислили с последнего курса...");
+            return lose;
+        }
+
+
+        System.out.println("Вы смогли победить все напасти во время обучения и успешно защитили диплом!\n" +
+                "С чем я Вас и поздравляю. Вы истинный герой!\nСпасибо за прохождение игры и до скорых встреч на тазах!\n\n");
+
+        System.out.println("Дорогой выпускник ВУЗа, наш Герой, как ты хочешь провести столь знаменательный вечер?\n" +
+                "1 - Отмечать получение диплома на тазах;\n2 - Отметить получение диплома с семьей.");
+        int finalDesicion = scanner.nextInt();
+        if (finalDesicion != 1) {
+            System.out.println("\n\nВы тихо отметили получение диплома с семьей, вспоминая все прекрасные моменты вашего обучения,\n" +
+                    "так неожиданно быстро прошедшего в вашей жизни. Вы знаете, что теперь вы истинный герой, и что в грядущей,\n" +
+                    "не менее легкой и интересной жизни, вам все будет по плечу!");
+            return lose;
+        }
+        return finalfinalBattle(player, scanner);
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+
+        Field mainField = new Field(LEN_FIELD_Y, LEN_FIELD_X);
+        int startPlayerPosY = 1;
+        int startPlayerPosX = 1;
+
+        System.out.print("Желаете сыграть в игру? (1 -да, 2 -нет): ");
+        int desicion = scanner.nextInt();
+        if (desicion != 1) {
+            return;
+        }
+
+
+
+        System.out.print("\nЗдравствуй, юный герой и будущий студент!\n" +
+                "У тебя есть возможность выбрать ВУЗ, в котором ты будешь учиться в течение игры," +
+                " или создать свой, со своими правилами и картами местности.\n" +
+                "Желаешь создать свою модель ВУЗа или выбрать иной ВУЗ (отличный от МГТУ)? (1 -да, 2 -нет): ");
+        int mapDesicion = scanner.nextInt();
+        if (mapDesicion == 1) {
+            runMapEditor(scanner);
+        }
+
+
+
+        System.out.print("\n\nДобро пожаловать в игру, герой! Поздравляю с зачислением! " +
+                "Теперь ты студент 1-го курса и перед тобой лежит долгий, тернистый, местами\n" +
+                "кажущийся непроходимый путь обучения. Для прохождения игры тебе необходимо " +
+                "выполнить основное задание - сдача диплома.\nНа сдаче ты встретишь главного босса, " +
+                "который покажет, достоин ли ты носить звание истинного Героя.\nУдачи!\n ");
+        System.out.println("\n-------------------------------------------------------\n\n");
+        System.out.println("Условные обозначения:\n" +
+                "+ - дорога (1 шаг)\n* - леса (3 шага)\n^ - горы (непроходимо)\nТ - сокровища (1)\n" +
+                "# - территория героя (2 шага)\n& - территория врага (2 шага)\n" +
+                "И - замок героя (1)\nК - замок врага (1)\n" +
+                "Г - герой\nA - герой врага\n");
+
+        Hero player = new Hero(startPlayerPosY, startPlayerPosX);
+        Hero computerPlayer = new Hero(LEN_FIELD_Y - 1, LEN_FIELD_X - 1);
+
+        Castle playerCastle = new Castle();
+        Castle computerCastle = new Castle();
+
+        mainField.displayField(player);
+
+        int gameEnd = 0;
+        int day = 1;
+        while (gameEnd == 0) {
+            System.out.println("\nДень " + day + ".");
+            day++;
+            int todaysMovement = player.getStep();
+            int dayEnd = 4;
+            int choice = 0;
+
+            while (choice != dayEnd && gameEnd == 0) {
+                System.out.println("Что же ты решишь делать, герой?\n" +
+                        "1 - переместиться в новое пространство\n" +
+                        "2 - посмотреть информацию о себе и своих соратниках\n" +
+                        "3 - сходить в профсоюз, улучшить себя и соратников\n" +
+                        "4 - лечь спать до следующего утра\n" +
+                        "5 - отчислиться\n");
+                choice = scanner.nextInt();
+                int e = 0;
+                while (choice < 1 || choice > 5) {
+                    e++;
+                    if (e == 1 || e % 15 == 0) {
+                        System.out.println("Прогуливаясь в свободное время по ВУЗУу, что не входило в ваши планы,\n" +
+                                "вы наткнулись на студсовет, который заставил вас поучаствовать в мероприятии.\n");
+                        if (todaysMovement >= 4) {
+                            System.out.println("Силы, оставшиеся на передвижение: -4\nЗолотишко героя: +1000\n\n");
+                            todaysMovement = todaysMovement - 4;
+                            player.addGold(1000);
+                        } else {
+                            System.out.println("У вас было слишком мало сил и вы уснули на мероприятии...\n\n");
+                            choice = dayEnd;
+                            break;
+                        }
+
+                    }
+                    System.out.println("Выбери действия, что ты умеешь делать (1-5).");
+                    choice = scanner.nextInt();
+                }
+                switch (choice) {
+                    case 1:
+                        mainField.displayField(player);
+                        System.out.println("Вы можете сделать " + todaysMovement + " шагов.\n");
+                        System.out.print("Введите координату Y точки перемещения:");
+                        int newPosY = scanner.nextInt();
+                        System.out.print("Введите координату X точки перемещения:");
+                        int newPosX = scanner.nextInt();
+
+                        int newMovement = player.move(player, computerPlayer, todaysMovement, newPosY, newPosX, startPlayerPosY, startPlayerPosX, mainField, scanner);
+                        if (newMovement == 100 || newMovement == 200) {
+                            gameEnd = 1;
+                            break;
+                        }
+                        if (newMovement != todaysMovement) {
+                            startPlayerPosY = newPosY;
+                            startPlayerPosX = newPosX;
+                            player.moveEnd(newPosY, newPosX);
+                        }
+                        todaysMovement = newMovement;
+                        mainField.displayField(player);
+                        System.out.println("Вы можете сделать " + todaysMovement + " шагов.\n");
+                        break;
+                    case 2:
+                        player.getInfAboutHero();
+                        break;
+                    case 3:
+                        int castleChoice = 0;
+                        int exit = 4;
+                        while (castleChoice != exit) {
+                            System.out.println("Что же ты решишь делать в профсоюзе, герой?\n" +
+                                    "1 - посмотреть, кто сейчас в кабинете профсоюза, и поговорить с ними:\n" +
+                                    "2 - похлопать по карманам (вдруг там что-нибудь звенит)\n" +
+                                    "3 - отдать " + playerCastle.getLevelOfProf() * 1000 + " денег профсоюзу на улучшение всего (повышает уровень студентов, с которыми вы можете познакомиться):\n" +
+                                    "4 - выйти из профсоюза, хватит с вас активностей на сегодня\n");
+                            castleChoice = scanner.nextInt();
+                            switch (castleChoice) {
+                                case 1:
+                                    playerCastle.buyUnits(player, scanner, day);
+                                    break;
+                                case 2:
+                                    System.out.println("У вас " + player.getGold() + " золотишка в карманах.\n");
+                                    break;
+                                case 3:
+                                    playerCastle.upgradeProf(player);
+                                    break;
+                                case 4:
+                                    System.out.println("Вы вышли из профсоюза.\n");
+                                    break;
+                            }
+                        }
+                        break;
+                    case 4:
+                        System.out.println("Сладких снов, студент!\n");
+                        player.addGold(1000);
+                        computerPlayer.addGold(1000);
+                        computerCastle.buyUnitsForComputer(computerPlayer, day);
+                        /*System.out.println("Противники после добавления:");
+                        for (int i = 1; i <= 5; i++) {
+                            if (computerPlayer.getUnits()[i].getCount() > 0) {
+                                computerPlayer.getUnits()[i].getInfAboutUnit();
+                            }
+                        }*/
+                        break;
+                    case 5:
+                        System.out.println("Вы действительно хотите покинуть вуз навсегда? (1 - да, 2 - нет).");
+                        int sad;
+                        sad = scanner.nextInt();
+                        if (sad == 1) {
+                            System.out.println("Прощай! Надеюсь в том месте, куда ты уходишь, твоя жизнь будет лучше. Успехов!");
+                            return;
+                        } else if (sad == 2) {
+                            System.out.println("Ура, герой все еще с нами!\n");
+                        } else {
+                            System.out.println("Вы не смогли поставить подпись в нужную клетку," +
+                                    "а значит герой все еще с нами!\n");
+                        }
+                        break;
+                }
+            }
+        }
+    }
+
+    private static void runMapEditor(Scanner scanner) {
+        System.out.println("\nВы зашли в редактор карт!\n");
+        return;
+    }
+}
