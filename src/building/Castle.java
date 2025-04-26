@@ -24,6 +24,12 @@ public class Castle {
         return levelOfProf;
     }
 
+    public void setLevelOfProf(int levelOfProf) {
+        for (; this.levelOfProf < levelOfProf; this.levelOfProf++){
+            improvementProf();
+        }
+    }
+
     public void upgradeProf(Hero player) {
         if (levelOfProf == 5) {
             System.out.println("Вы настолько известны и деятельны в профсоюзе, что лично вам уже не нужно сдавать деньги, чтобы быть его членом.\n");
@@ -124,14 +130,18 @@ public class Castle {
             if (day % 2 == 0) {
                 if (level < 4) {
                     computerPlayer.getUnits()[level].addCount(8);
+                    computerPlayer.addGold(-800);
                 } else {
                     computerPlayer.getUnits()[level].addCount(2);
+                    computerPlayer.addGold(-800);
                 }
             } else {
                 if (level < 4) {
                     computerPlayer.getUnits()[level].addCount(10);
+                    computerPlayer.addGold(-1200);
                 } else {
                     computerPlayer.getUnits()[level].addCount(1);
+                    computerPlayer.addGold(-1200);
                 }
             }
         }

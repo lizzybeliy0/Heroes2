@@ -2,6 +2,7 @@ package main;
 
 import field.Field;
 import field.ButtleField;
+import field.MapEditor;
 import humans.Hero;
 import building.Castle;
 import humans.Unit;
@@ -11,6 +12,10 @@ import java.util.Scanner;           // массив с текстами можн
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import save.Save;
+
+
+import java.io.*;
 
 
 public class Main {
@@ -225,8 +230,12 @@ public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
-
-        Field mainField = new Field(LEN_FIELD_Y, LEN_FIELD_X);
+        Hero player = null;
+        Hero computerPlayer = null;
+        Castle playerCastle = null;
+        Castle computerCastle = null;
+        Field mainField = null;
+        int day = 1;
         int startPlayerPosY = 1;
         int startPlayerPosX = 1;
 
@@ -235,25 +244,82 @@ public class Main {
         if (desicion != 1) {
             return;
         }
+        scanner.nextLine();
+
+        System.out.print("Каково твое имя, юный герой? ");
+        String playerName = scanner.nextLine();
 
 
-
-        System.out.print("\nЗдравствуй, юный герой и будущий студент!\n" +
-                "У тебя есть возможность выбрать ВУЗ, в котором ты будешь учиться в течение игры," +
-                " или создать свой, со своими правилами и картами местности.\n" +
-                "Желаешь создать свою модель ВУЗа или выбрать иной ВУЗ (отличный от МГТУ)? (1 -да, 2 -нет): ");
-        int mapDesicion = scanner.nextInt();
-        if (mapDesicion == 1) {
-            runMapEditor(scanner);
+        File saveFile = new File("saves/" + playerName + ".txt");
+        if (saveFile.exists()) {
+            System.out.print("Оооо, юный герой, ты уже был здесь, я тебя помню... " + playerName +
+                    ", кажется, верно?\nДа, ты ушел в академ в тот раз, точно. " +
+                    "Желаешь восстановиться? (1 - да, 2 - нет): ");
+            int loadChoice = scanner.nextInt();
+            if (loadChoice == 1) {
+                Object[] loaded = Save.loadGame(playerName);
+                if (loaded != null) {
+                    player = (Hero) loaded[0];
+                    computerPlayer = (Hero) loaded[1];
+                    mainField = (Field) loaded[2];
+                    day = (int) loaded[3];
+                    playerCastle = (Castle) loaded[4];
+                    computerCastle = (Castle) loaded[5];
+                    startPlayerPosY = player.getPosY();
+                    startPlayerPosX = player.getPosX();
+                }
+            }
         }
 
+        if (player == null) {
+            System.out.print("\nЗдравствуй, юный герой и будущий студент!\n" +
+                    "У тебя есть возможность выбрать ВУЗ, в котором ты будешь учиться в течение игры," +
+                    " или создать свой, со своими правилами и картами местности.\n" +
+                    "Желаешь создать свою модель ВУЗа или отредактировать иной ВУЗ (отличный от МГТУ)? (1 -да, 2 -нет): ");
+            int editorChoice = scanner.nextInt();
+            if (editorChoice == 1) {
+                runMapEditor(scanner);
+            }
+
+            System.out.print("Желаешь выбрать для игры иной ВУЗ (отличный от МГТУ)? (1 -да, 2 -нет)");
+            int mapDesicion = scanner.nextInt();
+            if (mapDesicion == 1) {
+                File mapsFolder = new File("savemaps");
+                if (mapsFolder.exists() && mapsFolder.listFiles() != null && mapsFolder.listFiles().length > 0) {
+                    System.out.println("Доступные карты:");
+                    for (File file : mapsFolder.listFiles()) {
+                        System.out.println(file.getName().replace(".txt", ""));
+                    }
+                    scanner.nextLine();
+
+                    System.out.print("Введите название карты: ");
+                    String mapName = scanner.nextLine();
+                    mainField = MapEditor.loadMap(mapName);
+
+                    if (mainField == null) {
+                        System.out.println("Ошибка загрузки карты, создана стандартная");
+                        mainField = new Field(LEN_FIELD_Y, LEN_FIELD_X, false);
+                    }
+                } else {
+                    System.out.println("Нет доступных карт, создана стандартная");
+                    mainField = new Field(LEN_FIELD_Y, LEN_FIELD_X, false);
+                }
+            } else {
+                mainField = new Field(LEN_FIELD_Y, LEN_FIELD_X, false);
+            }
+            player = new Hero(startPlayerPosY, startPlayerPosX);
+            computerPlayer = new Hero(LEN_FIELD_Y - 1, LEN_FIELD_X - 1);
+            playerCastle = new Castle();
+            computerCastle = new Castle();
 
 
-        System.out.print("\n\nДобро пожаловать в игру, герой! Поздравляю с зачислением! " +
-                "Теперь ты студент 1-го курса и перед тобой лежит долгий, тернистый, местами\n" +
-                "кажущийся непроходимый путь обучения. Для прохождения игры тебе необходимо " +
-                "выполнить основное задание - сдача диплома.\nНа сдаче ты встретишь главного босса, " +
-                "который покажет, достоин ли ты носить звание истинного Героя.\nУдачи!\n ");
+            System.out.print("\n\nДобро пожаловать в игру, герой! Поздравляю с зачислением! " +
+                    "Теперь ты студент 1-го курса и перед тобой лежит долгий, тернистый, местами\n" +
+                    "кажущийся непроходимый путь обучения. Для прохождения игры тебе необходимо " +
+                    "выполнить основное задание - сдача диплома.\nНа сдаче ты встретишь главного босса, " +
+                    "который покажет, достоин ли ты носить звание истинного Героя.\nУдачи!\n ");
+        }
+
         System.out.println("\n-------------------------------------------------------\n\n");
         System.out.println("Условные обозначения:\n" +
                 "+ - дорога (1 шаг)\n* - леса (3 шага)\n^ - горы (непроходимо)\nТ - сокровища (1)\n" +
@@ -261,16 +327,10 @@ public class Main {
                 "И - замок героя (1)\nК - замок врага (1)\n" +
                 "Г - герой\nA - герой врага\n");
 
-        Hero player = new Hero(startPlayerPosY, startPlayerPosX);
-        Hero computerPlayer = new Hero(LEN_FIELD_Y - 1, LEN_FIELD_X - 1);
-
-        Castle playerCastle = new Castle();
-        Castle computerCastle = new Castle();
-
         mainField.displayField(player);
 
         int gameEnd = 0;
-        int day = 1;
+        //int day = 1;
         while (gameEnd == 0) {
             System.out.println("\nДень " + day + ".");
             day++;
@@ -284,10 +344,11 @@ public class Main {
                         "2 - посмотреть информацию о себе и своих соратниках\n" +
                         "3 - сходить в профсоюз, улучшить себя и соратников\n" +
                         "4 - лечь спать до следующего утра\n" +
-                        "5 - отчислиться\n");
+                        "5 - сохранить прогресс\n" +
+                        "6 - отчислиться\n");
                 choice = scanner.nextInt();
                 int e = 0;
-                while (choice < 1 || choice > 5) {
+                while (choice < 1 || choice > 6) {
                     e++;
                     if (e == 1 || e % 15 == 0) {
                         System.out.println("Прогуливаясь в свободное время по ВУЗУу, что не входило в ваши планы,\n" +
@@ -328,6 +389,7 @@ public class Main {
                         todaysMovement = newMovement;
                         mainField.displayField(player);
                         System.out.println("Вы можете сделать " + todaysMovement + " шагов.\n");
+                        Save.saveGame(playerName, player, computerPlayer, mainField, day, playerCastle, computerCastle);
                         break;
                     case 2:
                         player.getInfAboutHero();
@@ -371,6 +433,12 @@ public class Main {
                         }*/
                         break;
                     case 5:
+
+                        // СОХРАНЕНИЕ
+                        Save.saveGame(playerName, player, computerPlayer, mainField, day, playerCastle, computerCastle);
+
+                        break;
+                    case 6:
                         System.out.println("Вы действительно хотите покинуть вуз навсегда? (1 - да, 2 - нет).");
                         int sad;
                         sad = scanner.nextInt();
@@ -390,7 +458,7 @@ public class Main {
     }
 
     private static void runMapEditor(Scanner scanner) {
-        System.out.println("\nВы зашли в редактор карт!\n");
-        return;
+        System.out.println("\nВы зашли в редактор карт!\n\n");
+        MapEditor.runMapEditor(scanner);
     }
 }

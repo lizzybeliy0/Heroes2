@@ -14,7 +14,7 @@ public class ButtleField extends Field {
     private boolean[][] placeUnit;
 
     public ButtleField(int lenY, int lenX, Unit[] playerUnits, Unit[] enemyUnits) {
-        super(lenY, lenX);
+        super(lenY, lenX, true);
         placeUnit = new boolean[lenY][lenX];
         for (int y = 0; y < lenY; y++) {
             for (int x = 0; x < lenX; x++) {

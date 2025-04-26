@@ -11,11 +11,36 @@ public class Field {
     private int lenX;
     private PartField[][] field;
 
-    public Field(int lenY, int lenX) {
+    public Field(int lenY, int lenX, boolean empty) {
         this.lenY = lenY;
         this.lenX = lenX;
         field = new PartField[lenY][lenX];
-        initializeField();
+
+        // Инициализация границ (x=0 или y=0)
+        for (int y = 0; y < lenY; y++) {
+            for (int x = 0; x < lenX; x++) {
+                if (x == 0 || y == 0) {
+                    field[y][x] = new PartField(-1); // Границы
+                }
+            }
+        }
+
+        if (empty) {
+            // Пустое поле - заполняем дорогами
+            for (int y = 1; y < lenY; y++) {
+                for (int x = 1; x < lenX; x++) {
+                    field[y][x] = new PartField(1); // Дорога
+                }
+            }
+        } else {
+            // Стандартная инициализация
+            for (int y = 1; y < lenY; y++) {
+                for (int x = 1; x < lenX; x++) {
+                    field[y][x] = new PartField(1); // Временное значение
+                }
+            }
+            initializeField(); // Заполняем по стандартным правилам
+        }
     }
 
     private void initializeField() {
@@ -66,10 +91,15 @@ public class Field {
                     System.out.print(y + "y\t");
                 } else if (y == 0) {
                     System.out.print(x + "x\t");
-                } else if (hero.getPosX() == x && hero.getPosY() == y) {
+                } else if (hero != null && hero.getPosX() == x && hero.getPosY() == y) {
                     System.out.print("Г\t");
                 } else {
-                    field[y][x].displayPartField();
+                    // Добавляем проверку на null для надежности
+                    if (field[y][x] != null) {
+                        field[y][x].displayPartField();
+                    } else {
+                        System.out.print("?\t"); // Запасной вариант
+                    }
                 }
             }
             System.out.println();

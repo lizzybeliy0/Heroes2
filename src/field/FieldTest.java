@@ -15,7 +15,7 @@ public class FieldTest {
 
     @Before
     public void setUp() {
-        field = new Field(TEST_SIZE_Y, TEST_SIZE_X);
+        field = new Field(TEST_SIZE_Y, TEST_SIZE_X, false);
         hero = new Hero(3,3);
     }
 

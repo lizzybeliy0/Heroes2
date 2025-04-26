@@ -74,6 +74,10 @@ public class Unit extends Human {
         this.count += count;
     }
 
+    public void setCount(int count) {
+        this.count = count;
+    }
+
     public int getAttack() {
         return attack;
     }

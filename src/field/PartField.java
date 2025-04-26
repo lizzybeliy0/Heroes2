@@ -15,6 +15,13 @@ public class PartField {
         this.castle = false;
     }
 
+    public void setState(int value, int ownage, boolean treasure, boolean castle) { //todo
+        this.value = value;
+        this.own = ownage;
+        this.treasure = treasure;
+        this.castle = castle;
+    }
+
     public int getValue() {
         return value;
     }

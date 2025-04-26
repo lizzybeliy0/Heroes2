@@ -19,7 +19,7 @@ public class MainTest {
 
     @Before
     public void setUp() {
-        Field field = new Field(11,11);
+        Field field = new Field(11,11, false);
         player = new Hero(1, 1);
         computerPlayer = new Hero(field.getLenY()-1, field.getLenX()-1);
     }

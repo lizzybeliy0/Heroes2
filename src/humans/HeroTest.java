@@ -17,7 +17,7 @@ public class HeroTest {
     @Before
     public void setUp() {
         hero = new Hero(2, 3);
-        field = new Field(11, 11);
+        field = new Field(11, 11, false);
         scanner = new Scanner(System.in);
     }
 
@@ -64,7 +64,7 @@ public class HeroTest {
 
     @Test
     public void testMovement() {
-        Field testField = new Field(11, 11) {
+        Field testField = new Field(11, 11, false) {
             @Override
             public PartField getPartField(int y, int x) {
                 if (y == 3 && x == 4) {
@@ -81,7 +81,7 @@ public class HeroTest {
 
     @Test
     public void testBlockedPathMovement() {
-        Field testField = new Field(10, 10) {
+        Field testField = new Field(10, 10, false) {
             @Override
             public PartField getPartField(int y, int x) {
                 if (y == 3 && x == 4) {
