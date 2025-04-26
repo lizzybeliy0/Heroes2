@@ -230,6 +230,14 @@ public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
+        System.out.print("Желаете сыграть в игру? (1 -да, 2 -нет): ");
+        int desicion = scanner.nextInt();
+        if (desicion != 1) {
+            return;
+        }
+        scanner.nextLine();
+
+
         Hero player = null;
         Hero computerPlayer = null;
         Castle playerCastle = null;
@@ -238,13 +246,6 @@ public class Main {
         int day = 1;
         int startPlayerPosY = 1;
         int startPlayerPosX = 1;
-
-        System.out.print("Желаете сыграть в игру? (1 -да, 2 -нет): ");
-        int desicion = scanner.nextInt();
-        if (desicion != 1) {
-            return;
-        }
-        scanner.nextLine();
 
         System.out.print("Каково твое имя, юный герой? ");
         String playerName = scanner.nextLine();
@@ -257,14 +258,14 @@ public class Main {
                     "Желаешь восстановиться? (1 - да, 2 - нет): ");
             int loadChoice = scanner.nextInt();
             if (loadChoice == 1) {
-                Object[] loaded = Save.loadGame(playerName);
-                if (loaded != null) {
-                    player = (Hero) loaded[0];
-                    computerPlayer = (Hero) loaded[1];
-                    mainField = (Field) loaded[2];
-                    day = (int) loaded[3];
-                    playerCastle = (Castle) loaded[4];
-                    computerCastle = (Castle) loaded[5];
+                Object[] load = Save.loadGame(playerName);
+                if (load != null) {
+                    player = (Hero) load[0];
+                    computerPlayer = (Hero) load[1];
+                    mainField = (Field) load[2];
+                    day = (int) load[3];
+                    playerCastle = (Castle) load[4];
+                    computerCastle = (Castle) load[5];
                     startPlayerPosY = player.getPosY();
                     startPlayerPosX = player.getPosX();
                 }
@@ -281,7 +282,7 @@ public class Main {
                 runMapEditor(scanner);
             }
 
-            System.out.print("Желаешь выбрать для игры иной ВУЗ (отличный от МГТУ)? (1 -да, 2 -нет)");
+            System.out.print("Желаешь выбрать для игры иной ВУЗ (отличный от МГТУ)? (1 -да, 2 -нет): ");
             int mapDesicion = scanner.nextInt();
             if (mapDesicion == 1) {
                 File mapsFolder = new File("savemaps");

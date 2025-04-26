@@ -9,7 +9,7 @@ public class MapEditor {
     public static void runMapEditor(Scanner scanner) {
         int finalDesicion = 4;
         int choice = 0;
-        while(choice!=finalDesicion){
+        while(choice != finalDesicion){
             System.out.print("1 - Создать свой ВУЗ\n2 - Редактировать существующую модель ВУЗа\n" +
                     "3 - Уничтожить ВУЗ\n4 - Вернуться к основной игре\n");
             choice = scanner.nextInt();
@@ -28,7 +28,7 @@ public class MapEditor {
                 case 4:
                     return;
                 default:
-                    System.out.println("Неверный выбор!");
+                    System.out.println("Выберите один из существующих вариантов!");
             }
         }
     }
@@ -45,7 +45,7 @@ public class MapEditor {
         ++height;
 
         if (width < 10 || height < 10) {
-            System.out.println("Минимальный размер карты - 10x10!");
+            System.out.println("Минимальный размер игрового поля - 10x10!");
             return;
         }
 
@@ -72,7 +72,7 @@ public class MapEditor {
         if (map != null) {
             editMap(map, mapName, scanner);
         } else {
-            System.out.println("ВУЗ не найдена!");
+            System.out.println("ВУЗ не найден!");
         }
     }
 
@@ -95,7 +95,7 @@ public class MapEditor {
                 return;
             } else if (choice == 3) {
                 System.out.println("Изменения отменены");
-                return; //куда ведет? todo
+                return;
             } else { System.out.println("Введите одно число из предложенных");}
         }
     }
@@ -111,15 +111,9 @@ public class MapEditor {
             return;
         }
 
-        System.out.println("Выберите тип элемента:");
-        System.out.println("1 - Дорога (+)");
-        System.out.println("2 - Лес (*)");
-        System.out.println("3 - Горы (^)");
-        System.out.println("4 - Сокровище (T)");
-        System.out.println("5 - Территория игрока (#)");
-        System.out.println("6 - Территория врага (&)");
-        System.out.println("7 - Замок игрока (И)");
-        System.out.println("8 - Замок врага (К)");
+        System.out.println("Выберите тип элемента:\n1 - Дорога (+)\n2 - Лес (*)\n3 - Горы (^)\n" +
+                "4 - Сокровище (T)\n5 - Территория игрока (#)\n6 - Территория врага (&)\n" +
+                "7 - Замок игрока (И)\n8 - Замок врага (К)");
 
         int type = scanner.nextInt();
         PartField cell = map.getPartField(y, x);
@@ -178,7 +172,7 @@ public class MapEditor {
         }
     }
 
-    private static void saveMap(Field map, String mapName) {
+    public static void saveMap(Field map, String mapName) {
         new File(MAPS_FOLDER).mkdirs();
 
         try (FileWriter fw = new FileWriter(MAPS_FOLDER + "/" + mapName + ".txt")) {
@@ -189,7 +183,7 @@ public class MapEditor {
                     PartField cell = map.getPartField(y, x);
                     fw.write(cell.getValue() + " " + cell.getOwnage() + " " +
                             (cell.isTreasure() ? 1 : 0) + " " +
-                            (cell.isCastle() ? 1 : 0) + " ");
+                            (cell.isCastle() ? 1 : 0) + " "); //todo
                 }
                 fw.write("\n");
             }
@@ -229,23 +223,23 @@ public class MapEditor {
     private static void deleteMap(Scanner scanner) {
         File mapsFolder = new File(MAPS_FOLDER);
         if (!mapsFolder.exists() || mapsFolder.listFiles() == null || mapsFolder.listFiles().length == 0) {
-            System.out.println("Нет доступных карт для удаления!");
+            System.out.println("Нет доступных ВУЗов для уничтожения!");
             return;
         }
 
-        System.out.println("Доступные карты:");
+        System.out.println("Доступные ВУЗы:");
         for (File file : mapsFolder.listFiles()) {
             System.out.println(file.getName().replace(".txt", ""));
         }
 
-        System.out.print("Введите название карты для удаления: ");
+        System.out.print("Введите название ВУЗа для уничтожения: ");
         String mapName = scanner.nextLine();
 
         File map = new File(MAPS_FOLDER + "/" + mapName + ".txt");
         if (map.exists() && map.delete()) { //проверь и удали, если возможно
-            System.out.println("Карта успешно удалена!");
+            System.out.println("ВУЗ успешно уничтожен!");
         } else {
-            System.out.println("Не удалось удалить карту!");
+            System.out.println("Не удалось уничтожить ВУЗ(");
         }
     }
 

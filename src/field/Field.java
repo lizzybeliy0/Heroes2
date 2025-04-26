@@ -16,30 +16,27 @@ public class Field {
         this.lenX = lenX;
         field = new PartField[lenY][lenX];
 
-        // Инициализация границ (x=0 или y=0)
         for (int y = 0; y < lenY; y++) {
             for (int x = 0; x < lenX; x++) {
                 if (x == 0 || y == 0) {
-                    field[y][x] = new PartField(-1); // Границы
+                    field[y][x] = new PartField(-1); // окаймление из цифр
                 }
             }
         }
 
         if (empty) {
-            // Пустое поле - заполняем дорогами
             for (int y = 1; y < lenY; y++) {
                 for (int x = 1; x < lenX; x++) {
-                    field[y][x] = new PartField(1); // Дорога
+                    field[y][x] = new PartField(1);
                 }
             }
         } else {
-            // Стандартная инициализация
             for (int y = 1; y < lenY; y++) {
                 for (int x = 1; x < lenX; x++) {
-                    field[y][x] = new PartField(1); // Временное значение
+                    field[y][x] = new PartField(1);
                 }
             }
-            initializeField(); // Заполняем по стандартным правилам
+            initializeField();
         }
     }
 
@@ -94,11 +91,10 @@ public class Field {
                 } else if (hero != null && hero.getPosX() == x && hero.getPosY() == y) {
                     System.out.print("Г\t");
                 } else {
-                    // Добавляем проверку на null для надежности
                     if (field[y][x] != null) {
                         field[y][x].displayPartField();
                     } else {
-                        System.out.print("?\t"); // Запасной вариант
+                        System.out.print("?\t");
                     }
                 }
             }

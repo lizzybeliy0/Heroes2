@@ -50,9 +50,8 @@ public class Save {
 
     public static Object[] loadGame(String playerName) {
         try (BufferedReader br = new BufferedReader(new FileReader("saves/" + playerName + ".txt"))) {
-            Object[] result = new Object[6]; // [0]player, [1]computer, [2]field, [3]day, [4]playerCastle, [5]computerCastle
+            Object[] result = new Object[6];
 
-            // Читаем размеры поля
             String[] fieldSize = br.readLine().split(" ");
             int lenY = Integer.parseInt(fieldSize[0]);
             int lenX = Integer.parseInt(fieldSize[1]);
@@ -60,7 +59,6 @@ public class Save {
 
             int day = Integer.parseInt(br.readLine());
 
-            // Позиции игрока
             String[] playerPos = br.readLine().split(" ");
             int playerY = Integer.parseInt(playerPos[0]);
             int playerX = Integer.parseInt(playerPos[1]);
@@ -69,16 +67,13 @@ public class Save {
             int computerY = Integer.parseInt(computerPos[0]);
             int computerX = Integer.parseInt(computerPos[1]);
 
-            // Золото игрока и компьютера
             int playerGold = Integer.parseInt(br.readLine());
             int computerGold = Integer.parseInt(br.readLine());
 
-            // Создаем героев
             Hero player = new Hero(playerY, playerX);
             Hero computer = new Hero(computerY, computerX);
 
-            // Устанавливаем золото
-            player.addGold( - 5000); // 5000 - начальное значение
+            player.addGold( - 5000);
             player.addGold(playerGold);
             computer.addGold(- 5000);
             computer.addGold(computerGold);
