@@ -74,7 +74,7 @@ public class HeroTest {
                 return super.getPartField(y, x);
             }
         };
-        int remainingSteps = hero.move(null, null, hero.getStep(), 3, 4,  //todo м б ошиб в hero.getStep()
+        int remainingSteps = hero.move(null, null, hero.getStep(), 3, 4,
                 hero.getPosY(), hero.getPosX(), testField, scanner);
         assertEquals(5, remainingSteps);
     }

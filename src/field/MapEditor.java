@@ -91,14 +91,39 @@ public class MapEditor {
             if (choice == 1) {
                 editMapElement(map, scanner);
             } else if (choice == 2) {
-                saveMap(map, mapName);
-                return;
+                if (!haveCastles(map)) { //todo (выполнено доп 3)
+                    System.out.println("Ошибка! В вузе должно быть ваше место (И) и место обитания приемной комиссии (К)!");
+                } else {
+                    saveMap(map, mapName);
+                    return;
+                }
             } else if (choice == 3) {
                 System.out.println("Изменения отменены");
                 return;
             } else { System.out.println("Введите одно число из предложенных");}
         }
     }
+
+    private static boolean haveCastles(Field map) {
+        int playerCastles = 0;
+        int enemyCastles = 0;
+
+        for (int y = 1; y < map.getLenY(); y++) {
+            for (int x = 1; x < map.getLenX(); x++) {
+                PartField cell = map.getPartField(y, x);
+                if (cell.isCastle()) {
+                    if (cell.getOwnage() == 1) {
+                        playerCastles++;
+                    } else if (cell.getOwnage() == 2) {
+                        enemyCastles++;
+                    }
+                }
+            }
+        }
+
+        return playerCastles == 1 && enemyCastles == 1;
+    }
+
 
     private static void editMapElement(Field map, Scanner scanner) {
         System.out.print("Введите координату Y: ");
@@ -113,7 +138,8 @@ public class MapEditor {
 
         System.out.println("Выберите тип элемента:\n1 - Дорога (+)\n2 - Лес (*)\n3 - Горы (^)\n" +
                 "4 - Сокровище (T)\n5 - Территория игрока (#)\n6 - Территория врага (&)\n" +
-                "7 - Замок игрока (И)\n8 - Замок врага (К)");
+                "7 - Ваше место (И)\n8 - Место обитания приемной комиссии (К)\n" +
+                "9 - Стойка с коммутаторами (с)");
 
         int type = scanner.nextInt();
         PartField cell = map.getPartField(y, x);
@@ -167,6 +193,36 @@ public class MapEditor {
                 cell.setTreasure(false);
                 cell.setCastle(true);
                 break;
+            case 9:
+                cell.setValue(1);
+                cell.setOwnage(0);
+                cell.setTreasure(false);
+                cell.setCastle(false);
+                cell.setSwitchStand(true);
+                cell.setActive(false);
+
+                System.out.print("Введите количество коммутаторов в стойке (1-9): ");
+                int count = scanner.nextInt();
+                while(count<1 || count>9){
+                    System.out.print("\nВ стойке не может быть меньше 1 коммутатора, введите число >=1 или <=9: ");
+                    scanner.nextLine();
+                    count = scanner.nextInt();
+                }
+                cell.setSwitchesCount(count);
+
+                System.out.print("Введите номер главного коммутатора (1-" + count + "): ");
+                int mainIndex = scanner.nextInt();
+                while(mainIndex>count || mainIndex<1){
+                    System.out.print("\nДанного коммутатора нет в стойке(\n Введите номер коммутатора, который" +
+                            " может быть в стойке: ");
+                    scanner.nextLine();
+                    mainIndex = scanner.nextInt();
+                }
+                cell.setMainSwitchIndex(mainIndex);
+
+                System.out.print("\nМесто расположения стойки секретно! О нем знают лишь просвещенные!\n" +
+                        "Запомните его, до начала игры вы его больше не увидите!\n");
+                break;
             default:
                 System.out.println("Неверный тип элемента!");
         }
@@ -181,9 +237,19 @@ public class MapEditor {
             for (int y = 1; y < map.getLenY(); y++) {
                 for (int x = 1; x < map.getLenX(); x++) {
                     PartField cell = map.getPartField(y, x);
-                    fw.write(cell.getValue() + " " + cell.getOwnage() + " " +
+                    fw.write(cell.getValue() + " " +
+                            cell.getOwnage() + " " +
                             (cell.isTreasure() ? 1 : 0) + " " +
-                            (cell.isCastle() ? 1 : 0) + " "); //todo
+                            (cell.isCastle() ? 1 : 0) + " ");
+                    // вот добавила запись коммутаторов стоек
+                    fw.write((cell.isSwitchStand() ? 1 : 0) + " ");
+                    if (cell.isSwitchStand()) {
+                        fw.write(cell.getSwitchesCount() + " " +
+                                cell.getMainSwitchIndex() + " " +
+                                (cell.isActive() ? 1 : 0) + " ");
+                    } else {
+                        fw.write("0 0 0 ");
+                    }
                 }
                 fw.write("\n");
             }
@@ -203,17 +269,26 @@ public class MapEditor {
             Field map = new Field(lenY, lenX, true);
 
             for (int y = 1; y < lenY; y++) {
-                String[] row = br.readLine().split(" ");
+                String[] row = br.readLine().split(" "); //построчно раздел пробел
                 for (int x = 1; x < lenX; x++) {
-                    int index = (x-1)*4;
+                    int index = (x-1)*8;
                     PartField cell = map.getPartField(y, x);
+
                     cell.setValue(Integer.parseInt(row[index]));
                     cell.setOwnage(Integer.parseInt(row[index+1]));
                     cell.setTreasure(row[index+2].equals("1"));
                     cell.setCastle(row[index+3].equals("1"));
+
+                    boolean isSwitchStand = row[index+4].equals("1");
+                    cell.setSwitchStand(isSwitchStand);
+
+                    if (isSwitchStand) {
+                        cell.setSwitchesCount(Integer.parseInt(row[index+5]));
+                        cell.setMainSwitchIndex(Integer.parseInt(row[index+6]));
+                        cell.setActive(row[index+7].equals("1"));
+                    }
                 }
             }
-
             return map;
         } catch (Exception e) {
             return null;

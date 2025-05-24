@@ -1,7 +1,7 @@
 package save;
 
 import humans.Hero;
-import field.Field;
+import field.*;
 import building.Castle;
 import java.io.*;
 
@@ -15,7 +15,6 @@ public class Save {
         try (FileWriter fw = new FileWriter("saves/" + playerName + ".txt")) {
 
             fw.write(field.getLenY() + " " + field.getLenX() + "\n");
-
             fw.write(day-1 + "\n");
             fw.write(player.getPosY() + " " + player.getPosX() + "\n");
             fw.write(computer.getPosY() + " " + computer.getPosX() + "\n");
@@ -34,9 +33,25 @@ public class Save {
 
             fw.write(playerCastle.getLevelOfProf() + "\n");
 
+
             for (int y = 1; y < field.getLenY(); y++) {
                 for (int x = 1; x < field.getLenX(); x++) {
-                    fw.write(field.getPartField(y, x).getValue() + " ");
+                    PartField cell = field.getPartField(y, x);
+
+                    fw.write(cell.getValue() + " " +
+                            cell.getOwnage() + " " +
+                            (cell.isTreasure() ? 1 : 0) + " " +
+                            (cell.isCastle() ? 1 : 0) + " ");
+
+                    fw.write((cell.isSwitchStand() ? 1 : 0) + " ");
+
+                    if (cell.isSwitchStand()) {
+                        fw.write(cell.getSwitchesCount() + " " +
+                                cell.getMainSwitchIndex() + " " +
+                                (cell.isActive() ? 1 : 0) + " ");
+                    } else {
+                        fw.write("0 0 0 ");
+                    }
                 }
                 fw.write("\n");
             }
@@ -94,11 +109,26 @@ public class Save {
 
             Field field = new Field(lenY, lenX, false);
             for (int y = 1; y < field.getLenY(); y++) {
-                String[] row = br.readLine().split(" ");
+                String[] row = br.readLine().split(" "); //т к построчно читаем)
                 for (int x = 1; x < field.getLenX(); x++) {
-                    field.getPartField(y, x).setValue(Integer.parseInt(row[x-1]));
+                    int index = (x-1)*8; //8 значений по индексам в массиве (с 0)
+                    PartField cell = field.getPartField(y, x);
+
+                    cell.setValue(Integer.parseInt(row[index]));
+                    cell.setOwnage(Integer.parseInt(row[index+1]));
+                    cell.setTreasure(row[index+2].equals("1"));
+                    cell.setCastle(row[index+3].equals("1"));
+
+                    boolean isSwitchStand = row[index+4].equals("1");
+                    cell.setSwitchStand(isSwitchStand);
+                    if (isSwitchStand) {
+                        cell.setSwitchesCount(Integer.parseInt(row[index+5]));
+                        cell.setMainSwitchIndex(Integer.parseInt(row[index+6]));
+                        cell.setActive(row[index+7].equals("1"));
+                    }
                 }
             }
+
             Castle computerCastle = new Castle();
 
             result[0] = player;

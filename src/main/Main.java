@@ -1,11 +1,12 @@
 package main;
 
-import field.Field;
-import field.ButtleField;
-import field.MapEditor;
+import java.util.Collections;
+import java.util.ArrayList;
+import field.*;
 import humans.Hero;
 import building.Castle;
 import humans.Unit;
+import statistics.Statistic;
 
 import java.util.Random;            // интерфейс / бекэнд + арифметика + враг другой цвет!
 import java.util.Scanner;           // массив с текстами можно сделать и выводить
@@ -16,6 +17,7 @@ import save.Save;
 
 
 import java.io.*;
+import java.util.*;
 
 
 public class Main {
@@ -24,17 +26,107 @@ public class Main {
     private static final int LEN_BATTLE_FIELD_Y = 6;
     private static final int LEN_BATTLE_FIELD_X = 6;
     private static int treasureDayBattle = 1;
+    private static final int SWITCH_ACTIVATION_INTERVAL = 3;
+    private static final int SWITCH_EXPLOSION_TURNS = 3;
+    private static final int SWITCH_EXPLOSION_DAMAGE = 20;
+    private static final int SWITCH_ATTEMPTS = 3;
+
+    private static int switchesDestroyed = 0;
+    private static String currentMapName = "МГТУ";
 
     static Logger log = LogManager.getLogger(Main.class);
     
 
     public static Random random = new Random();
 
+    private static void activateSwitchStands(Field field) {
+        ArrayList<PartField> switchStands = new ArrayList<>();
+
+        for (int y = 1; y < field.getLenY(); y++) {
+            for (int x = 1; x < field.getLenX(); x++) {
+                PartField cell = field.getPartField(y, x);
+                if (cell.isSwitchStand() && !cell.isActive()) {
+                    switchStands.add(cell);
+                }
+            }
+        }
+        if (!switchStands.isEmpty()) {
+            Collections.shuffle(switchStands); //перемешивание
+            PartField toActivate = switchStands.get(0);
+            toActivate.setActive(true);
+            toActivate.setTurnsLeft(SWITCH_EXPLOSION_TURNS);
+            System.out.println("\nАктивирована стойка с коммутаторами! На деактивацию у вас 3 дня.\n");
+        }
+    }
+
+    private static boolean boomSwitchStands(Hero player, Field field) {
+        for (int y = 1; y < field.getLenY(); y++) {
+            for (int x = 1; x < field.getLenX(); x++) {
+                PartField cell = field.getPartField(y, x);
+                if (cell.isSwitchStand() && cell.isActive()) {
+                    cell.setTurnsLeft(cell.getTurnsLeft() - 1);
+                    if (cell.getTurnsLeft() <= 0) {
+                        System.out.println("\n3 дня уже прошло... Стойка с коммутаторами взорвалась!\n");
+                        boolean gameEnd = applySwitchExplosionDamage(player);
+                        cell.setActive(false);
+                        if(gameEnd){
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public static boolean interactionWithSwitchStand(Hero player, PartField cell, Scanner scanner) {
+        if (!cell.isActive()) return false;
+
+        System.out.println("Вы подошли к активной стойке с коммутаторами!");
+        System.out.println("У вас " + SWITCH_ATTEMPTS + " попытки найти главный коммутатор");
+
+        for (int attempt = 1; attempt <= SWITCH_ATTEMPTS; attempt++) {
+            System.out.print("Попытка " + attempt + ": введите номер коммутатора (1-" + cell.getSwitchesCount() + "): ");
+            int guess = scanner.nextInt();
+            if (guess == cell.getMainSwitchIndex()) {
+                System.out.println("Успех! Вы нашли главный коммутатор и деактивировали стойку!\n");
+                cell.setActive(false);
+                switchesDestroyed++;
+                return false;
+            } else {
+                System.out.println("Неверно! Это не главный коммутатор.");
+            }
+        }
+        System.out.println("Вы не успели обезвредить стойку! Произошел взрыв!");
+        boolean gameEnd = applySwitchExplosionDamage(player);
+        cell.setActive(false);
+        if(gameEnd){
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean applySwitchExplosionDamage(Hero player) {
+        System.out.println("Все студенты получают урон " + SWITCH_EXPLOSION_DAMAGE);
+
+        for (Unit unit : player.getUnits()) {
+            if (unit != null && unit.getCount() > 0) {
+                unit.attack(SWITCH_EXPLOSION_DAMAGE);
+                if (unit.getCount() > 0) {
+                    return false; //продолжаем играть
+                }
+            }
+        }
+        System.out.println("\nВсе ваши соратники погибли при взрыве коммутационной стойки!\n" +
+                "Нужно было следить за оборудованием лучше...");
+        return true;//конец игры
+    }
+
     public static int finalfinalBattle(Hero player, Scanner scanner) {
         int randomValue = random.nextInt(2);              //  случайное число 0 или 1
         //System.out.println("Случайное значение: " + randomValue);
         Unit[] enemyUnits;
-        if (randomValue == 0) {                                    //созд одного директора или армию копов
+        if (randomValue == 0) {                                  //созд одного директора или армию копов
             System.out.println("\n\nНа тазах вы наткнулись на полицию, которая ловит всех студентов присутствующих там.\n" +
                     "Но вы же хотите продолжить веселье, юный герой? Возможность веселиться нужно завоевать!\nБой!\n");
 
@@ -84,7 +176,7 @@ public class Main {
                         "стремиться,\nмой юный герой! Вы уходите с тазов счастливым, ведь, несмотря на поражение, это был лучший " +
                         "выпуск из всех, что можно представить!\nВы держите в руках синий диплом.");
             }
-            return lose;
+            return 1000;
         }
         if (randomValue == 0) {
             System.out.println("\n\nПоздравляю, вы победили полицию! Вы с друзьями весело и задорно продолжается праздновать получение " +
@@ -94,10 +186,11 @@ public class Main {
             } else {
                 System.out.println("Вы держите в руках синий диплом");
             }
-            return lose;
+            return 1000;
         }
         System.out.println("\n\nВы победили ректора! Он вами гордится и очень доволен.\nОн лично вручает вам ваш красный диплом!");
-        return lose;
+        return 1000;
+
     }
 
 
@@ -222,7 +315,7 @@ public class Main {
             System.out.println("\n\nВы тихо отметили получение диплома с семьей, вспоминая все прекрасные моменты вашего обучения,\n" +
                     "так неожиданно быстро прошедшего в вашей жизни. Вы знаете, что теперь вы истинный герой, и что в грядущей,\n" +
                     "не менее легкой и интересной жизни, вам все будет по плечу!");
-            return lose;
+            return 1000;
         }
         return finalfinalBattle(player, scanner);
     }
@@ -237,7 +330,6 @@ public class Main {
         }
         scanner.nextLine();
 
-
         Hero player = null;
         Hero computerPlayer = null;
         Castle playerCastle = null;
@@ -247,9 +339,34 @@ public class Main {
         int startPlayerPosY = 1;
         int startPlayerPosX = 1;
 
+        System.out.print("Хотите увидеть статистику рекордов перед началом? (1 - да, 2 - нет): ");
+        int showStats = scanner.nextInt();
+        if (showStats == 1) {
+            System.out.println("\nТоп-5 по времени прохождения:");
+            List<String> timeStats = Statistic.getTopTimeStats();
+            if (timeStats.isEmpty()) {
+                System.out.println("Статистика пока отсутствует");
+            } else {
+                for (String stat : timeStats) {
+                    System.out.println(stat);
+                }
+            }
+
+            System.out.println("\nТоп-5 по уничтоженным стойкам:");
+            List<String> switchStats = Statistic.getTopSwitchStats();
+            if (switchStats.isEmpty()) {
+                System.out.println("Статистика пока отсутствует");
+            } else {
+                for (String stat : switchStats) {
+                    System.out.println(stat);
+                }
+            }
+            System.out.println();
+        }
+        scanner.nextLine();
+
         System.out.print("Каково твое имя, юный герой? ");
         String playerName = scanner.nextLine();
-
 
         File saveFile = new File("saves/" + playerName + ".txt");
         if (saveFile.exists()) {
@@ -294,19 +411,22 @@ public class Main {
                     scanner.nextLine();
 
                     System.out.print("Введите название карты: ");
-                    String mapName = scanner.nextLine();
-                    mainField = MapEditor.loadMap(mapName);
+                    currentMapName = scanner.nextLine();
+                    mainField = MapEditor.loadMap(currentMapName);
 
                     if (mainField == null) {
                         System.out.println("Ошибка загрузки карты, создана стандартная");
                         mainField = new Field(LEN_FIELD_Y, LEN_FIELD_X, false);
+                        currentMapName = "МГТУ";
                     }
                 } else {
                     System.out.println("Нет доступных карт, создана стандартная");
                     mainField = new Field(LEN_FIELD_Y, LEN_FIELD_X, false);
+                    currentMapName = "МГТУ";
                 }
             } else {
                 mainField = new Field(LEN_FIELD_Y, LEN_FIELD_X, false);
+                currentMapName = "МГТУ";
             }
             player = new Hero(startPlayerPosY, startPlayerPosX);
             computerPlayer = new Hero(LEN_FIELD_Y - 1, LEN_FIELD_X - 1);
@@ -325,7 +445,7 @@ public class Main {
         System.out.println("Условные обозначения:\n" +
                 "+ - дорога (1 шаг)\n* - леса (3 шага)\n^ - горы (непроходимо)\nТ - сокровища (1)\n" +
                 "# - территория героя (2 шага)\n& - территория врага (2 шага)\n" +
-                "И - замок героя (1)\nК - замок врага (1)\n" +
+                "И - ваше место (1)\nК - место обитания приемной комиссии (1)\n" +
                 "Г - герой\nA - герой врага\n");
 
         mainField.displayField(player);
@@ -338,6 +458,14 @@ public class Main {
             int todaysMovement = player.getStep();
             int dayEnd = 4;
             int choice = 0;
+
+            if(boomSwitchStands(player, mainField)){
+                //gameEnd = 1;
+                break;
+            }
+            if ((day-1) % SWITCH_ACTIVATION_INTERVAL == 0) {
+                activateSwitchStands(mainField);
+            }
 
             while (choice != dayEnd && gameEnd == 0) {
                 System.out.println("Что же ты решишь делать, герой?\n" +
@@ -379,6 +507,17 @@ public class Main {
 
                         int newMovement = player.move(player, computerPlayer, todaysMovement, newPosY, newPosX, startPlayerPosY, startPlayerPosX, mainField, scanner);
                         if (newMovement == 100 || newMovement == 200) {
+                            gameEnd = 1;
+                            break;
+                        }
+                        if (newMovement == 1000) {
+                            Statistic.saveTimeStat(playerName, day, currentMapName);
+                            Statistic.saveSwitchStat(playerName, switchesDestroyed, currentMapName);
+
+                            System.out.println("\nВаша статистика:");
+                            System.out.println("Дней игры: " + day);
+                            System.out.println("Уничтожено стоек: " + switchesDestroyed);
+                            System.out.println("Карта: " + currentMapName);
                             gameEnd = 1;
                             break;
                         }
@@ -434,8 +573,6 @@ public class Main {
                         }*/
                         break;
                     case 5:
-
-                        // СОХРАНЕНИЕ
                         Save.saveGame(playerName, player, computerPlayer, mainField, day, playerCastle, computerCastle);
 
                         break;

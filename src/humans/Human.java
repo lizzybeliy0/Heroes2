@@ -45,7 +45,7 @@ public abstract class Human {
     public static boolean isMovePossibleSimple(int todaysMovement, int posY, int posX, int previousPosY, int previousPosX, Field field) {
 
         if ((posY == 0 || posX == 0) || (posY >= field.getLenY() || posX >= field.getLenX())) {
-            System.out.println("Во время обучения у вас нет времени выйти за пределы карты заданий.\n");
+            System.out.println("Во время обучения у вас нет времени выйти за пределы места вашего обучения.\n");
             return false;
         }
         if (previousPosY == posY && previousPosX == posX) {
@@ -83,12 +83,16 @@ public abstract class Human {
 
                 PartField cell = field.getPartField(previousPosY, previousPosX);
 
-                if (cell.isTreasure()) {
+                if (cell.isSwitchStand() && cell.isActive()) {
+                    if( Main.interactionWithSwitchStand(hero, cell, scanner)){
+                        return 200;
+                    }
+                }
 
+                if (cell.isTreasure()) {
                     return field.getTreasure(cell, hero, scanner, todaysMovement);
                 }
                 if (cell.isCastle() && cell.getOwnage() == 2) {
-
                     return Main.finalBattle(hero, computer, scanner);
                 }
 
@@ -101,7 +105,7 @@ public abstract class Human {
                     System.out.println("Из-за сложности пути вам не хватит сил дойти. " +
                             "Попробуйте другую точку назначения.\n");
                     return was;
-                } else if (todaysMovement - value >= 0) {                                          //todo (сделано)
+                } else if (todaysMovement - value >= 0) { //todo (сделано)
                     todaysMovement = todaysMovement - value;
                 }
             }
